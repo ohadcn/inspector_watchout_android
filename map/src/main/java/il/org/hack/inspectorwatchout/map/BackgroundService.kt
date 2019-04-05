@@ -43,7 +43,7 @@ class BackgroundService : Service() {
     private var notificationManager: NotificationManager? = null
     private var notification: Notification? = null
 
-    private val LOCATION_INTERVAL = 1L
+    private val LOCATION_INTERVAL = 5L
     private val LOCATION_DISTANCE = 10F
 
     override fun onBind(intent: Intent): IBinder? {
@@ -64,7 +64,7 @@ class BackgroundService : Service() {
             (object: AsyncTask<Void, Void, Int>() {
                 override fun doInBackground(vararg params: Void): Int {
                     try {
-                        Log.i(TAG, "doInBackground")
+                        Log.i(TAG, "doInBackground $location")
                         if (inRange(location))
                             return 1
                         else
@@ -139,21 +139,22 @@ class BackgroundService : Service() {
         return ""
     }
 
-    val dist = 0.0001
-    val cacheTtl = 5 * 60 * 1000
+    val dist = 0.1
+    val cacheTtl = .5 * 60
     val inspectorTtl = 120 * 60 * 1000
     var cacheTime = 0L
     var url = "https://hackathon-inspector.herokuapp.com/api/get_all"
     var inspectors: JSONArray? = null
     private fun inRange(location: Location): Boolean {
-        if((inspectors == null) || (cacheTime + cacheTtl < System.currentTimeMillis())) {
+        val now = (System.currentTimeMillis() / 1000.0)
+        if((inspectors == null) || (cacheTime + cacheTtl < now)) {
             val jsonStr = getURL(url)
             Log.i(TAG, jsonStr)
             inspectors = JSONArray(jsonStr)
         }
-        for(i in 0..(inspectors!!.length())) {
+        for(i in 0..(inspectors!!.length() - 1)) {
             val inspector: JSONObject? = inspectors!!.get(i) as? JSONObject
-            if((inspector?.getDouble("timestamp")!! > System.currentTimeMillis() - inspectorTtl) &&
+            if((inspector?.getDouble("timestamp")!! > now - inspectorTtl) &&
                 (Math.abs(inspector?.getDouble("lat") - location.latitude) < dist) &&
                 (Math.abs(inspector?.getDouble("lon") - location.longitude) < dist)) {
                 return true
@@ -222,13 +223,29 @@ class BackgroundService : Service() {
                                 defaultSound: Int = 0): Notification? {
 
         Log.i(TAG, msg)
+        val defaultSoundUri = if(defaultSound != 0) Uri.Builder()
+            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+            .authority(resources.getResourcePackageName(defaultSound))
+            .appendPath(resources.getResourceTypeName(defaultSound))
+            .appendPath(resources.getResourceEntryName(defaultSound))
+            .build() else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel("channel_01", "My Channel", NotificationManager.IMPORTANCE_DEFAULT)
             notificationManager = getSystemService<NotificationManager>(NotificationManager::class.java!!)
             notificationManager?.createNotificationChannel(channel)
+            notificationManager?.cancel(12345)
 
             val builder = Notification.Builder(applicationContext, "channel_01").setAutoCancel(true)
-            return builder.build()
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Inspector Watch is Running")
+                .setContentText(msg)
+                .setColor(resources.getColor(R.color.colorAccent))
+            if(sound)
+                builder.setSound(defaultSoundUri)
+            notification = builder.build()
+            notificationManager?.notify(12345, notification)
+            return notification
 
         } else {
             notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -236,12 +253,6 @@ class BackgroundService : Service() {
             if(notification != null) {
                 notificationManager?.cancel(12345)
             }
-            val defaultSoundUri = if(defaultSound != 0) Uri.Builder()
-                .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
-                .authority(resources.getResourcePackageName(defaultSound))
-                .appendPath(resources.getResourceTypeName(defaultSound))
-                .appendPath(resources.getResourceEntryName(defaultSound))
-                .build() else RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             val notificationBuilder = NotificationCompat.Builder(this)
                 // .setLargeIcon(image)/*Notification icon image*/
                 //.setLargeIcon(BitmapFactory.decodeResource(this.resources, R.drawable.ic_launcher_icon))

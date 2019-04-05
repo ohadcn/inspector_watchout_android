@@ -6,8 +6,8 @@ android {
         applicationId "il.org.hack.inspectorwatchout.app"
         minSdkVersion 23
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode 102
+        versionName "1.0.2"
 
 
     }
