@@ -139,9 +139,9 @@ class BackgroundService : Service() {
         return ""
     }
 
-    val dist = 0.1
-    val cacheTtl = .5 * 60
-    val inspectorTtl = 120 * 60 * 1000
+    val dist = 0.0005
+    val cacheTtl = 5 * 60 * 1000
+    val inspectorTtl = 120 * 60
     var cacheTime = 0L
     var url = "https://hackathon-inspector.herokuapp.com/api/get_all"
     var inspectors: JSONArray? = null
