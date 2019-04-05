@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="il.org.hack.inspectorwatchout.map">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <application
+            android:supportsRtl="true"
+            android:hardwareAccelerated="true"
+            android:theme="@style/AppTheme">
+        <activity android:name=".MainActivity"
+                  android:launchMode="singleInstance"
+                  android:screenOrientation="portrait"
+        android:theme="@style/Theme.AppCompat.NoActionBar">
+            <intent-filter android:order="1">
+                <action android:name="android.intent.action.VIEW"/>
+
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+
+                <data
+                        android:host="bike.oodi.co.il"
+                        android:pathPattern="/.*"
+                        android:scheme="https"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service
+                android:name=".BackgroundService"
+                android:enabled="true"
+                android:exported="true">
+        </service>
+    </application>
+
+</manifest>
